@@ -1,0 +1,27 @@
+{
+  "name": "registerGL",
+  "version": "1.0.0",
+  "description": "WebGL implementation of image registration",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dblezek/registerGL.git"
+  },
+  "keywords": [
+    "webgl",
+    "image",
+    "registration"
+  ],
+  "author": "Daniel Blezek <daniel.blezek@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dblezek/registerGL/issues"
+  },
+  "homepage": "https://github.com/dblezek/registerGL",
+  "devDependencies": {
+    "browser-sync": "^2.11.1",
+    "gitbook-cli": "^1.0.1",
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.0",
+    "yargs": "^4.2.0"
+  }
+}
