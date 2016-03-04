@@ -16,9 +16,18 @@ var register = {
   textureCoordBuffer: null,
 
   // programs
+  // Metric program subtracts two textures
   metricProgram: null,
+
+  // Display program simply renders an image
+  displayProgram: null,
+
+  // Sum program will add and downsample
   sumProgram: null,
-  
+
+  // Texture for difference image
+  differenceTexture: null,
+  differenceFramebuffer: null,
 };
 
 
@@ -61,6 +70,8 @@ function init() {
     1,1]), gl.STATIC_DRAW);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
+
+  create_difference_texture ( register );
   
   // Load the image via a promise
   load_image(gl, "images/lion.png").then(function(texture){
@@ -83,6 +94,14 @@ function render(r) {
   gl.clearColor(1.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
+  gl.bindFramebuffer(gl.FRAMEBUFFER, r.differenceFramebuffer);
+  compute_difference ( r );
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  compute_difference ( r );
+}
+
+function compute_difference ( r ) {
+  var gl = r.gl;
   gl.useProgram(r.metricProgram);
   checkGLError(gl);
   // window.requestAnimationFrame(render,canvas);
