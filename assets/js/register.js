@@ -1,16 +1,26 @@
 
-var canvas = document.getElementById('canvas');
-var gl = null;
 
-// Fixed image variables
-var fixedTexture;
-var movingTexture;
+var register = {
 
-// buffer is the gemotery array for the triangles
-var buffer;
+  canvas: document.getElementById('canvas'),
+  gl: null,
 
-// Texture coordinates
-var textureCoordBuffer;
+  // Textures
+  fixedTexture: null,
+  movingTexture: null,
+
+  // buffer is the gemotery array for the triangles
+  buffer: null,
+
+  // Texture coordinates
+  textureCoordBuffer: null,
+
+  // programs
+  metricProgram: null,
+  sumProgram: null,
+  
+};
+
 
 
 $(function() {
@@ -20,14 +30,14 @@ $(function() {
 
 
 function init() {
-  gl = canvas.getContext("webgl");
+  var gl = register.gl = canvas.getContext("webgl");
 
   if ( !gl.getExtension('OES_texture_float') ) {
     alert ( "This browser does not support floating point textures!" );
   };
-  
+
   // Vertex buffer
-  buffer = gl.createBuffer();
+  var buffer = register.buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.bufferData( gl.ARRAY_BUFFER,
                  new Float32Array([
@@ -40,7 +50,7 @@ function init() {
                  gl.STATIC_DRAW);
 
   // Texture coordinates need to correspond to the vertex coordinates
-  textureCoordBuffer = gl.createBuffer();
+  var textureCoordBuffer = register.textureCoordBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
     0,0,
@@ -54,36 +64,32 @@ function init() {
   
   // Load the image via a promise
   load_image(gl, "images/lion.png").then(function(texture){
-    fixedTexture = texture;
-
-    console.log("Loaded fixed texture");
+    register.fixedTexture = texture;
     return load_image(gl,"images/lion-rotate.png");
-  }).then(function(texture2) {
-    console.log("Loaded moving texture");
-    movingTexture = texture2;
-    
+  }).then(function(texture) {
+    register.movingTexture = texture;
     // Chain compiling the code
     return compile_program(gl, "shaders/register.vs", "shaders/register.fs" );
-    
   }).then(function(program){
-    glProgram = program;
-    render(gl);
+    register.metricProgram = program;
+    render(register);
   }).catch(function(errorMessage){
     $("#status").html(message);
   });
 }
 
-function render(gl) {
+function render(r) {
+  var gl = r.gl;
   gl.clearColor(1.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  gl.useProgram(glProgram);
+  gl.useProgram(r.metricProgram);
   checkGLError(gl);
   // window.requestAnimationFrame(render,canvas);
 
-  var tex = gl.getAttribLocation(glProgram, 'texPosition');
+  var tex = gl.getAttribLocation(r.metricProgram, 'texPosition');
   checkGLError(gl);
-  gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+  gl.bindBuffer(gl.ARRAY_BUFFER, r.textureCoordBuffer);
   checkGLError(gl);
   gl.enableVertexAttribArray(tex);
   checkGLError(gl);
@@ -92,48 +98,25 @@ function render(gl) {
 
   // Create a buffer and put a single clipspace rectangle in
   // it (2 triangles)
-  var position = gl.getAttribLocation(glProgram, 'position');
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  var position = gl.getAttribLocation(r.metricProgram, 'position');
+  gl.bindBuffer(gl.ARRAY_BUFFER, r.buffer);
   gl.enableVertexAttribArray(position);
   gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
 
   // Bind our texture to the 0'th texture, and set the uniform accordingly
-  var sampler = gl.getUniformLocation(glProgram, "fixedImage");
+  var sampler = gl.getUniformLocation(r.metricProgram, "fixedImage");
   gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, fixedTexture);
+  gl.bindTexture(gl.TEXTURE_2D, r.fixedTexture);
   gl.uniform1i(sampler, 0);
   checkGLError(gl);
 
-  var sampler = gl.getUniformLocation(glProgram, "movingImage");
+  var sampler = gl.getUniformLocation(r.metricProgram, "movingImage");
   gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D, movingTexture);
+  gl.bindTexture(gl.TEXTURE_2D, r.movingTexture);
   gl.uniform1i(sampler, 1);
   checkGLError(gl);
   
   // draw
-  // gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-  // Send our uniforms down into the shaders
-
-  // // set up the sourceTextureSize
-  // gl.uniform2f(gl.getUniformLocation(glProgram, "sourceTextureSize"), canvas.width, canvas.height );
-
-  // // the sourceTexture
-  // gl.activeTexture(gl.TEXTURE0);
-  // gl.bindTexture(gl.TEXTURE_2D, sourceTexture);
-  // gl.uniform1i(gl.getUniformLocation(glProgram, "sourceTextureSampler"), 0);
-
-  // // the coordinate attribute
-  // gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  // var coordinateLocation = gl.getAttribLocation(glProgram, "coordinate");
-  // gl.enableVertexAttribArray( coordinateLocation );
-  // gl.vertexAttribPointer( coordinateLocation, 3, gl.FLOAT, false, 0, 0);
-
-  // // the textureCoordinate attribute
-  // gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
-  // var textureCoordinateLocation = gl.getAttribLocation(glProgram, "textureCoordinate");
-  // gl.enableVertexAttribArray( textureCoordinateLocation );
-  // gl.vertexAttribPointer( textureCoordinateLocation, 2, gl.FLOAT, false, 0, 0);
 
 }
