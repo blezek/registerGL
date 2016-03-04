@@ -1,10 +1,10 @@
 
-var glProgram;
 var canvas = document.getElementById('canvas');
+var gl = null;
 
 // Fixed image variables
-var fixedTextureImage = new Image();
 var fixedTexture;
+var movingTexture;
 
 // buffer is the gemotery array for the triangles
 var buffer;
@@ -20,8 +20,12 @@ $(function() {
 
 
 function init() {
-  var gl = canvas.getContext("webgl");
+  gl = canvas.getContext("webgl");
 
+  if ( !gl.getExtension('OES_texture_float') ) {
+    alert ( "This browser does not support floating point textures!" );
+  };
+  
   // Vertex buffer
   buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -51,8 +55,13 @@ function init() {
   // Load the image via a promise
   load_image(gl, "images/lion.png").then(function(texture){
     fixedTexture = texture;
-    console.log("Loaded texture");
 
+    console.log("Loaded fixed texture");
+    return load_image(gl,"images/lion-rotate.png");
+  }).then(function(texture2) {
+    console.log("Loaded moving texture");
+    movingTexture = texture2;
+    
     // Chain compiling the code
     return compile_program(gl, "shaders/register.vs", "shaders/register.fs" );
     
@@ -95,6 +104,12 @@ function render(gl) {
   gl.uniform1i(sampler, 0);
   checkGLError(gl);
 
+  var sampler = gl.getUniformLocation(glProgram, "movingImage");
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, movingTexture);
+  gl.uniform1i(sampler, 1);
+  checkGLError(gl);
+  
   // draw
   // gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.drawArrays(gl.TRIANGLES, 0, 6);

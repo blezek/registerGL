@@ -12,7 +12,6 @@ gulp.task('js', function() {
   gulp.src('assets/js/*.js')
     .pipe(concat('register.js'))
     .pipe(gulp.dest( dist+ "/js"));
-  
   gulp.src('assets/vendor/*.js')
     .pipe(concat('vendor.js'))
     .pipe(gulp.dest( dist+ "/js"));
@@ -25,13 +24,12 @@ gulp.task('assets', function() {
   gulp.src('assets/pages/*.html')
     .pipe(gulp.dest( dist+ "/"));
 });
+
 gulp.task('build', ['js', 'assets']);
 gulp.task('watch', ['js', 'assets'], browserSync.reload);
 
-
-
 // Static server
-gulp.task('default', function() {
+gulp.task('default', ['build'], function() {
   browserSync.init({
     open: argv.open,
     server: {
@@ -39,6 +37,7 @@ gulp.task('default', function() {
     }
   });
 
+  // Rebuild when our assets change
   gulp.watch(["assets/**"], ['watch']);
 });
 
