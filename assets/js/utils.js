@@ -57,7 +57,7 @@ function createProgram(gl, vertexShader, fragmentShader) {
 };
 
 
-function checkGLError() {
+function checkGLError(gl) {
 	var error = gl.getError();
 	if (error != gl.NO_ERROR) {
 		var str = "GL Error: " + error + " " + gl.enum_strings[error];
