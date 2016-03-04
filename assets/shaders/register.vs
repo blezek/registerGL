@@ -2,7 +2,6 @@ precision highp float;
 
 attribute vec2 position;
 attribute vec2 texPosition;
-uniform sampler2D fixedImage;
 
 // Pass the texture coordinate to the fragment shader
 varying vec2 vTexCoord;
