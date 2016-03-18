@@ -31,6 +31,8 @@ var register = {
   
   // Texture for difference image
   textures: {},
+  sumPyramid: [],
+  outPyramid: [],
   differenceTexture: null,
 };
 
@@ -79,6 +81,15 @@ function init() {
 
   register.textures["A"] = create_float_texture ( register, 512, 512 );
   register.textures["B"] = create_float_texture ( register, 512, 512 );
+
+  // Summing textures
+  var dim = 512;
+  while ( dim > 1 ) {
+    console.log ( "Creating " + dim );
+    register.sumPyramid.push ( create_float_texture ( register, dim, dim ) );
+    register.outPyramid.push ( create_texture ( register, dim, dim ) );
+    dim = dim / 2.0;
+  }
   
   // Load the image via a promise
   load_image(gl, "images/chest.png").then(function(texture){
@@ -95,9 +106,13 @@ function init() {
     register.metricProgram = program;
     return compile_program(gl, "shaders/register.vs", "shaders/scale.fs" );
   }).then(function(program){
-    console.log ( "Programs", register.programs )
     register.programs["scale"] = program;
-    console.log ( "Programs", register.programs )
+    return compile_program(gl, "shaders/register.vs", "shaders/sum.fs" );
+  }).then(function(program){
+    register.programs["sum"] = program;
+    return compile_program(gl, "shaders/register.vs", "shaders/encode_float.fs" );
+  }).then(function(program){
+    register.programs["encode_float"] = program;
     start_render(register);
   }).catch(function(errorMessage){
     console.log("Error: " + errorMessage)
@@ -123,13 +138,53 @@ function start_render(r) {
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["A"], 0);
   render ( r, r.programs["scale"], [
     {name: "image", value: r.fixedTexture},
-    {name: "scale", value: 2.1},
+    {name: "scale", value: 2.0},
   ]);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["B"], 0);
   render ( r, r.programs["scale"], [
     {name: "image", value: r.textures["A"]},
-    {name: "scale", value: 1.0/2.1},
+    {name: "scale", value: 1.0/2.0},
   ]);
+
+  // Copy the texture into the highest level of the pyramid
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.sumPyramid[0], 0);
+  render ( r, r.programs["sum"], [
+    {name: "image", value: r.textures["B"]},
+    {name: "count", value: 1},
+    {name: "offset", value: 0.0},
+  ]);
+  
+  // Sum ...
+  var dim = 256;
+  var index = 0;
+  while ( dim > 1 ) {
+    console.log("Summing size " + dim + " into texture " + (index+1))
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.sumPyramid[index+1], 0);
+    render ( r, r.programs["sum"], [
+      {name: "image", value: r.sumPyramid[index]},
+      {name: "count", value: 2},
+      {name: "offset", value: 1.0 / dim},
+    ]);
+
+    dim = dim / 2.0;
+    index = index + 1;
+  }
+
+  // Read back
+  var w = 512;
+  var h = 512;
+  var pixels = new Uint8Array(w*h * 4);
+  var tempBuffer = create_texture(r, w, h);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tempBuffer, 0);
+  render ( r, r.programs["encode_float"], [
+    {name: "image", value: r.sumPyramid[1]},
+  ]);  
+
+  gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+  pixels = new Float32Array(pixels.buffer);
+  console.log("Pixel sum: ", pixels.reduce(function(a,b){return a+b;}));
+  
+  
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
   
