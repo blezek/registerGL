@@ -10,7 +10,7 @@ function isInteger(n){
 }
 
 function isFloat(n){
-    return n === +n && n !== (n|0);
+  return typeof(n) === "number";
 }
 
 function isBoolean(n){
