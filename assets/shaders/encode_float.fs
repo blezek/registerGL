@@ -1,4 +1,5 @@
 // Pack a floating point value into a 8 bit output
+// see: http://stackoverflow.com/a/20859830/334619 for details
 // Parameters are
 // image -- image to sample
 
