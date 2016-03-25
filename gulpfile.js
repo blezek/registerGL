@@ -9,19 +9,20 @@ var dist = "./dist/"
 
 // Build, returning a stream
 gulp.task('js', function() {
-  gulp.src('assets/js/*.js')
-    .pipe(concat('register.js'))
-    .pipe(gulp.dest( dist+ "/js"));
   gulp.src('assets/vendor/*.js')
     .pipe(concat('vendor.js'))
     .pipe(gulp.dest( dist+ "/js"));
+  return gulp.src('assets/js/*.js')
+    .pipe(concat('register.js'))
+    .pipe(gulp.dest( dist+ "/js"));
 });
+
 gulp.task('assets', function() {
   gulp.src('assets/images/**')
     .pipe(gulp.dest( dist+ "/images/"));
   gulp.src('assets/shaders/**')
     .pipe(gulp.dest( dist+ "/shaders/"));
-  gulp.src('assets/pages/*.html')
+  return gulp.src('assets/pages/*.html')
     .pipe(gulp.dest( dist+ "/"));
 });
 
@@ -38,7 +39,7 @@ gulp.task('default', ['build'], function() {
   });
 
   // Rebuild when our assets change
-  gulp.watch(["assets/**"], ['watch']);
+  gulp.watch(["assets/**"], ['watch'], browserSync.reload);
 });
 
 gulp.task('book', function(cb) {

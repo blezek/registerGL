@@ -14,8 +14,7 @@
 # Build
 
 ```bash
-grunt build
-grunt watch # open http://localhost:3000
+gulp  # open http://localhost:3000
 ```
 
 # Libraries
