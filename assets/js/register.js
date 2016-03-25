@@ -85,7 +85,6 @@ function init() {
   // Summing textures
   var dim = 512;
   while ( dim > 1 ) {
-    console.log ( "Creating " + dim );
     register.sumPyramid.push ( create_float_texture ( register, dim, dim ) );
     register.outPyramid.push ( create_texture ( register, dim, dim ) );
     dim = dim / 2.0;
@@ -140,57 +139,74 @@ function start_render(r) {
     {name: "image", value: r.fixedTexture},
     {name: "scale", value: 2.0},
   ]);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["B"], 0);
   render ( r, r.programs["scale"], [
     {name: "image", value: r.textures["A"]},
     {name: "scale", value: 1.0/2.0},
   ]);
 
+
+
+
+  // See if we can read pixels back from WebGL
+  
   // Copy the texture into the highest level of the pyramid
+  gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.sumPyramid[0], 0);
   render ( r, r.programs["sum"], [
-    {name: "image", value: r.textures["B"]},
+    {name: "image", value: r.fixedTexture},
     {name: "count", value: 1},
     {name: "offset", value: 0.0},
   ]);
+
+  var pixels;
+  pixels = read_texture(r, r.fixedTexture, 512, 512);
+  console.log("FixedTexture -- Pixel sum: ", pixels.reduce(function(a,b){return a+b;}));
+  var pixels = read_texture(r, r.sumPyramid[0], 512, 512);
+  console.log("Sum[0]       -- Pixel sum: ", pixels.reduce(function(a,b){return a+b;}));
+
   
   // Sum ...
   var dim = 256;
   var index = 0;
   while ( dim > 1 ) {
-    console.log("Summing size " + dim + " into texture " + (index+1))
+    var offset = 1.0 / (2.0*dim);
+    console.log("Summing size " + dim + " into texture " + (index+1) + " offset is " + offset);
+    gl.viewport(0,0,dim,dim);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.sumPyramid[index+1], 0);
     render ( r, r.programs["sum"], [
       {name: "image", value: r.sumPyramid[index]},
       {name: "count", value: 2},
-      {name: "offset", value: 1.0 / dim},
+      {name: "offset", value: offset},
     ]);
+
+    var pixels = read_texture(r, r.sumPyramid[index+1], dim, dim);
+    console.log("Sum["+index+"]       -- Pixel sum: ", pixels.reduce(function(a,b){return a+b;}));
 
     dim = dim / 2.0;
     index = index + 1;
   }
 
-  // Read back
-  var w = 512;
-  var h = 512;
-  var pixels = new Uint8Array(w*h * 4);
-  var tempBuffer = create_texture(r, w, h);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tempBuffer, 0);
-  render ( r, r.programs["encode_float"], [
-    {name: "image", value: r.sumPyramid[1]},
-  ]);  
-
-  gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-  pixels = new Float32Array(pixels.buffer);
-  console.log("Pixel sum: ", pixels.reduce(function(a,b){return a+b;}));
+  // var dim = 256;
+  // var offset = 1.0 / (2.0*dim);
+  // gl.viewport(0,0,dim,dim);
+  // gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
+  // gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.sumPyramid[1], 0);
+  // render ( r, r.programs["sum"], [
+  //   {name: "image", value: r.fixedTexture},
+  //   {name: "count", value: 2},
+  //   {name: "offset", value: offset},
+  // ]);
   
-  
+  gl.viewport(0,0,512,512);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
   
   console.log("Showing fixed image")
   render ( r, r.displayProgram, [
-    {name: "image", value: r.textures["B"]},
+    {name: "image", value: r.sumPyramid[6]},
   ]);
 }
 
