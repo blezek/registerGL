@@ -4,6 +4,22 @@
 // count    -- number of pixels to sum in X and Y
 // offset   -- offset in the input texture space, usually 1.0 / input_texture_width
 
+
+// An important consideration here.  When rendering to a texture, there is an interplay
+// with gl.viewport and gl.bindFramebuffer/gl.framebufferTexture2D.  If the viewport
+// is bigger than the texture, the texture will only contain part of the viewport, and
+// the remainder will be drawn "outside" the texture.  To have the texture cover the
+// entire viewport, the texture and viewport need to be the same.  For downsampling, this
+// usually means the viewport must be set to the same size as the texture.
+//
+// var dim = 256;
+// var texture = create_float_texture ( register, dim, dim );
+// var framebuffer = gl.createFramebuffer();
+// gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+// gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+// gl.viewport(0,0,dim,dim);
+
+
 precision highp float;
 
 // Passed texture coordinate from vertex shader
@@ -23,11 +39,11 @@ void main(void) {
   highp vec4 accumulator;
 
   for ( int x = 0; x < LOOP_MAX; x+=1 ) {
-    if ( float(x) > count ) {
+    if ( float(x) >= count ) {
       break;
     }
     for ( int y = 0; y < LOOP_MAX; y+=1 ) {
-      if ( float(y) > count ) {
+      if ( float(y) >= count ) {
         break;
       }
       accumulator += texture2D ( image, vTexCoord + vec2(float(x)*offset, float(y)*offset));
@@ -39,7 +55,8 @@ void main(void) {
   //   }
   // }
 
-  
+  // accumulator = texture2D ( image, vTexCoord);
+  // accumulator = vec4( 1.0 * vTexCoord.x, 0, 0, 1);
   gl_FragColor = accumulator;
   
 }
