@@ -82,14 +82,6 @@ function init() {
   register.textures["A"] = create_float_texture ( register, 512, 512 );
   register.textures["B"] = create_float_texture ( register, 512, 512 );
 
-  // Summing textures
-  var dim = 512;
-  while ( dim > 1 ) {
-    register.sumPyramid.push ( create_float_texture ( register, dim, dim ) );
-    register.outPyramid.push ( create_texture ( register, dim, dim ) );
-    dim = dim / 2.0;
-  }
-  
   // Load the image via a promise
   load_image(gl, "images/chest.png").then(function(texture){
     register.fixedTexture = texture;
@@ -112,6 +104,12 @@ function init() {
     return compile_program(gl, "shaders/register.vs", "shaders/encode_float.fs" );
   }).then(function(program){
     register.programs["encode_float"] = program;
+    return compile_program(gl, "shaders/register.vs", "shaders/gradient.fs" );
+  }).then(function(program){
+    register.programs["gradient"] = program;
+    return compile_program(gl, "shaders/register.vs", "shaders/smooth.fs" );
+  }).then(function(program){
+    register.programs["smooth"] = program;
     start_render(register);
   }).catch(function(errorMessage){
     console.log("Error: " + errorMessage)
@@ -124,89 +122,39 @@ function start_render(r) {
   gl.clearColor(1.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  // Render the difference image to a texture and display
+  // Calculate the gradient
   gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["A"], 0);
-  render ( r, r.metricProgram, [
-    {name: "fixedImage", value: r.fixedTexture},
-    {name: "movingImage", value: r.movingTexture},
+  render ( r, r.programs["gradient"], [
+    {name: "image", value: r.fixedTexture},
+    {name: "delta", value: 1/512},
   ]);
 
-  // Scale up, then scale down
-  gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["A"], 0);
-  render ( r, r.programs["scale"], [
-    {name: "image", value: r.fixedTexture},
-    {name: "scale", value: 2.0},
-  ]);
+  // Smooth
+  var sigma = 8;
   gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["B"], 0);
-  render ( r, r.programs["scale"], [
+  render ( r, r.programs["smooth"], [
     {name: "image", value: r.textures["A"]},
-    {name: "scale", value: 1.0/2.0},
+    {name: "delta", value: 1/512},
+    {name: "sigma", value: sigma},
+    {name: "direction", value: 0},
   ]);
-
-
-
-
-  // See if we can read pixels back from WebGL
-  
-  // Copy the texture into the highest level of the pyramid
   gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.sumPyramid[0], 0);
-  render ( r, r.programs["sum"], [
-    {name: "image", value: r.fixedTexture},
-    {name: "count", value: 1},
-    {name: "offset", value: 0.0},
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["A"], 0);
+  render ( r, r.programs["smooth"], [
+    {name: "image", value: r.textures["B"]},
+    {name: "delta", value: 1/512},
+    {name: "sigma", value: sigma},
+    {name: "direction", value: 1},
   ]);
 
-  var pixels;
-  pixels = read_texture(r, r.fixedTexture, 512, 512);
-  console.log("FixedTexture -- Pixel sum: ", pixels.reduce(function(a,b){return a+b;}));
-  var pixels = read_texture(r, r.sumPyramid[0], 512, 512);
-  console.log("Sum[0]       -- Pixel sum: ", pixels.reduce(function(a,b){return a+b;}));
-
-  
-  // Sum ...
-  var dim = 256;
-  var index = 0;
-  while ( dim > 1 ) {
-    var offset = 1.0 / (2.0*dim);
-    console.log("Summing size " + dim + " into texture " + (index+1) + " offset is " + offset);
-    gl.viewport(0,0,dim,dim);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.sumPyramid[index+1], 0);
-    render ( r, r.programs["sum"], [
-      {name: "image", value: r.sumPyramid[index]},
-      {name: "count", value: 2},
-      {name: "offset", value: offset},
-    ]);
-
-    var pixels = read_texture(r, r.sumPyramid[index+1], dim, dim);
-    console.log("Sum["+index+"]       -- Pixel sum: ", pixels.reduce(function(a,b){return a+b;}));
-
-    dim = dim / 2.0;
-    index = index + 1;
-  }
-
-  // var dim = 256;
-  // var offset = 1.0 / (2.0*dim);
-  // gl.viewport(0,0,dim,dim);
-  // gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
-  // gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.sumPyramid[1], 0);
-  // render ( r, r.programs["sum"], [
-  //   {name: "image", value: r.fixedTexture},
-  //   {name: "count", value: 2},
-  //   {name: "offset", value: offset},
-  // ]);
-  
   gl.viewport(0,0,512,512);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-  
-  console.log("Showing fixed image")
+  console.log("Showing gradient")
   render ( r, r.displayProgram, [
-    {name: "image", value: r.sumPyramid[6]},
+    {name: "image", value: r.textures["A"]},
   ]);
 }
 
