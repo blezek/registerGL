@@ -31,6 +31,5 @@ void main(void) {
   dy += texture2D(image, vTexCoord + vec2(0,delta)).x;
   dy += texture2D(image, vTexCoord + vec2(delta,delta)).x;
 
-  len = length (vec2(dx,dy) );
-  gl_FragColor = vec4(dx, dy, len, 1.0);
+  gl_FragColor = vec4(dx, dy, 0.0, 1.0);
 }

@@ -34,7 +34,7 @@ function demonsStep(r,count) {
     // Calculate the gradients
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["A"], 0);
     render ( r, r.programs["copy"], [
-      {name: "image", value: r.fixedImage},
+      {name: "image", value: r.textures["fixed"]},
     ]);
     smoothBuffer ( r, "A", 4.0 );
     gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
@@ -59,7 +59,7 @@ function demonsStep(r,count) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["dr"], 0);
     render ( r, r.programs["displacement"], [
-      {name: "fixedImage", value: r.fixedTexture},
+      {name: "fixedImage", value: r.textures["fixed"]},
       {name: "fixedImageGradient", value: r.textures["fixedGradient"]},
       {name: "movingImage", value: r.textures["displaced"]},
       {name: "movingImageGradient", value: r.textures["movingGradient"]},

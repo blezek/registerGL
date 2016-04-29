@@ -23,7 +23,7 @@ void main(void) {
 
   float delta = Im - If;
   // vec4 s = dIm + dIf;
-  float l = dIf.z;
+  float l = length(dIf);
   vec4 dr = delta * dIf / ( delta * delta + l );
   // dr.x = dIf.x / l;
   // dr.y = 0.0;

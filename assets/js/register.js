@@ -82,9 +82,11 @@ function init() {
   // Load the image via a promise
   load_image(gl, "images/copd1_eBHCT_slice.png").then(function(texture){
     register.fixedTexture = texture;
+    register.textures["fixed"] = texture;
     return load_image(gl,"images/copd1_iBHCT_slice.png");
   }).then(function(texture) {
     register.movingTexture = texture;
+    register.textures["moving"] = texture;
     // Chain compiling the code
     return compile_program(gl, "shaders/register.vs", "shaders/display.fs" );
   }).then(function(program){
@@ -131,10 +133,8 @@ function init() {
   register.textures["B"] = create_float_texture ( register, 512, 512 );
   register.textures["r"] = create_float_texture ( register, 512, 512 );
   register.textures["dr"] = create_float_texture ( register, 512, 512 );
-  register.textures["moving"] = register.movingTexture;
   register.textures["movingGradient"] = create_float_texture ( register, 512, 512 );
   register.textures["displaced"] = create_float_texture ( register, 512, 512 );
-  register.textures["fixed"] = register.fixedTexture;
   register.textures["fixedGradient"] = create_float_texture ( register, 512, 512 );
 
   $("#step").click(function() {
