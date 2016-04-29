@@ -79,13 +79,10 @@ function init() {
     1,1]), gl.STATIC_DRAW);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-  register.textures["A"] = create_float_texture ( register, 512, 512 );
-  register.textures["B"] = create_float_texture ( register, 512, 512 );
-
   // Load the image via a promise
-  load_image(gl, "images/chest.png").then(function(texture){
+  load_image(gl, "images/copd1_eBHCT_slice.png").then(function(texture){
     register.fixedTexture = texture;
-    return load_image(gl,"images/chest-rotated.png");
+    return load_image(gl,"images/copd1_iBHCT_slice.png");
   }).then(function(texture) {
     register.movingTexture = texture;
     // Chain compiling the code
@@ -101,6 +98,9 @@ function init() {
     return compile_program(gl, "shaders/register.vs", "shaders/sum.fs" );
   }).then(function(program){
     register.programs["sum"] = program;
+    return compile_program(gl, "shaders/register.vs", "shaders/copy.fs" );
+  }).then(function(program){
+    register.programs["copy"] = program;
     return compile_program(gl, "shaders/register.vs", "shaders/encode_float.fs" );
   }).then(function(program){
     register.programs["encode_float"] = program;
@@ -110,51 +110,65 @@ function init() {
     return compile_program(gl, "shaders/register.vs", "shaders/smooth.fs" );
   }).then(function(program){
     register.programs["smooth"] = program;
+    return compile_program(gl, "shaders/register.vs", "shaders/displacement.fs" );
+  }).then(function(program){
+    register.programs["displacement"] = program;
+    return compile_program(gl, "shaders/register.vs", "shaders/updateR.fs" );
+  }).then(function(program){
+    register.programs["updateR"] = program;
+    return compile_program(gl, "shaders/register.vs", "shaders/displace.fs" );
+  }).then(function(program){
+    register.programs["displace"] = program;
     start_render(register);
   }).catch(function(errorMessage){
     console.log("Error: " + errorMessage)
     $("#status").html(errorMessage);
   });
+
+
+  // Textures needed
+  register.textures["A"] = create_float_texture ( register, 512, 512 );
+  register.textures["B"] = create_float_texture ( register, 512, 512 );
+  register.textures["r"] = create_float_texture ( register, 512, 512 );
+  register.textures["dr"] = create_float_texture ( register, 512, 512 );
+  register.textures["moving"] = register.movingTexture;
+  register.textures["movingGradient"] = create_float_texture ( register, 512, 512 );
+  register.textures["displaced"] = create_float_texture ( register, 512, 512 );
+  register.textures["fixed"] = register.fixedTexture;
+  register.textures["fixedGradient"] = create_float_texture ( register, 512, 512 );
+
+  $("#step").click(function() {
+    start_render(register);
+  });
+  
+  $("#step10").click(function() {
+    start_render(register,10);
+  });
+
+  $("#buffer").change(function() {
+    console.log("Display " + $("#buffer").val());
+    display(register,$("#buffer").val());
+  })
+  
 }
 
-function start_render(r) {
+function display(r,buffer) {
   var gl = r.gl;
   gl.clearColor(1.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
-
-  // Calculate the gradient
-  gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["A"], 0);
-  render ( r, r.programs["gradient"], [
-    {name: "image", value: r.fixedTexture},
-    {name: "delta", value: 1/512},
-  ]);
-
-  // Smooth
-  var sigma = 8;
-  gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["B"], 0);
-  render ( r, r.programs["smooth"], [
-    {name: "image", value: r.textures["A"]},
-    {name: "delta", value: 1/512},
-    {name: "sigma", value: sigma},
-    {name: "direction", value: 0},
-  ]);
-  gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["A"], 0);
-  render ( r, r.programs["smooth"], [
-    {name: "image", value: r.textures["B"]},
-    {name: "delta", value: 1/512},
-    {name: "sigma", value: sigma},
-    {name: "direction", value: 1},
-  ]);
-
   gl.viewport(0,0,512,512);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-  console.log("Showing gradient")
   render ( r, r.displayProgram, [
-    {name: "image", value: r.textures["A"]},
+    {name: "image", value: r.textures[buffer]},
   ]);
+  
 }
+
+function start_render(r,count) {
+  demonsStep(r, count||1);
+  display (r, $('#buffer').val());
+}
+
+
+
 

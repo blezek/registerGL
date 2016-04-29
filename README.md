@@ -17,18 +17,27 @@ Images are represented as floating point textures, with image magnitude stored i
 ### Kernels Needed
 
 - `gradient.fs` -- Given an image texture, compute the gradient.  `r,g,b` channels are `dx, dy, magnitude`.
+  - **parameters:**
   - `delta` spatial difference to neighboring pixel, relative to image size, i.e. $(1.0 / width)$
 - `smooth.fs` -- Given an image texture, compute the gradient.  Smoothing occurs in the `r` and `g` channels to cover both images and gradients. Always calculated in a `20x20` window, and the `b` and `a` channels are passed through.
+  - **parameters:**
   - `sigma` width of Gaussian, expressed as a floating point value relative to the image size, i.e. $( 1 / width )$
   - `direction` calculate in `x` or `y` for the separable filter
 - `displacement.fs` -- calculate the displacement vector.
+  - **parameters:**
   - `movingImage` -- updated moving image
   - `movingImageGradient` -- gradient of moving image
   - `fixedImage` -- fixed image
   - `fixedImageGradient` -- gradient of fixed image
   -  multiple images, possibly `alpha` factors, etc
-- **UpdateR** -- update the `r` displacement vector image, basically a sum of `r` and `dr`
-  - **Parameters** -- `r` and `dr` images  
+- `updateR` -- update the `r` displacement vector image, basically a sum of `r` and `dr`
+  - **parameters:**
+  - `r` and `dr` images
+- `displace.fs` -- displace the moving image
+  - **parameters:**
+  - `movingImage` -- image to update
+  - `r` -- displacement vector field
+
 
 # Data
 
