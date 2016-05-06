@@ -79,6 +79,15 @@ function init() {
     1,1]), gl.STATIC_DRAW);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
+  // Textures needed
+  register.textures["A"] = create_float_texture ( register, 512, 512 );
+  register.textures["B"] = create_float_texture ( register, 512, 512 );
+  register.textures["r"] = create_float_texture ( register, 512, 512 );
+  register.textures["dr"] = create_float_texture ( register, 512, 512 );
+  register.textures["movingGradient"] = create_float_texture ( register, 512, 512 );
+  register.textures["displaced"] = create_float_texture ( register, 512, 512 );
+  register.textures["fixedGradient"] = create_float_texture ( register, 512, 512 );
+
   // Load the image via a promise
   load_image(gl, "images/copd1_eBHCT_slice.png").then(function(texture){
     register.fixedTexture = texture;
@@ -121,21 +130,12 @@ function init() {
     return compile_program(gl, "shaders/register.vs", "shaders/displace.fs" );
   }).then(function(program){
     register.programs["displace"] = program;
-    start_render(register);
+    // start_render(register);
   }).catch(function(errorMessage){
     console.log("Error: " + errorMessage)
     $("#status").html(errorMessage);
   });
 
-
-  // Textures needed
-  register.textures["A"] = create_float_texture ( register, 512, 512 );
-  register.textures["B"] = create_float_texture ( register, 512, 512 );
-  register.textures["r"] = create_float_texture ( register, 512, 512 );
-  register.textures["dr"] = create_float_texture ( register, 512, 512 );
-  register.textures["movingGradient"] = create_float_texture ( register, 512, 512 );
-  register.textures["displaced"] = create_float_texture ( register, 512, 512 );
-  register.textures["fixedGradient"] = create_float_texture ( register, 512, 512 );
 
   $("#step").click(function() {
     start_render(register);
@@ -148,13 +148,28 @@ function init() {
   $("#buffer").change(function() {
     console.log("Display " + $("#buffer").val());
     display(register,$("#buffer").val());
-  })
+  });
+
+  $("#restart").click(function() {
+    // Zero the R buffer
+    console.log("setting r buffer to 0.0")
+    var r = register;
+    var gl = r.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["r"], 0);
+    render ( r, r.programs["scale"], [
+      {name: "image", value: r.textures["A"]},
+      {name: "scale", value: 0.0},
+    ]);
+    display(register,$("#buffer").val());
+  });
   
 }
 
 function display(r,buffer) {
+  console.log("Displaying buffer " + buffer);
   var gl = r.gl;
-  gl.clearColor(1.0, 0.0, 0.0, 1.0);
+  gl.clearColor(0.0, 1.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.viewport(0,0,512,512);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);

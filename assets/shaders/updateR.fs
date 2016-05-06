@@ -14,5 +14,9 @@ void main(void) {
   vec4 drVal = texture2D(dr, vTexCoord);
 
   gl_FragColor = rVal + drVal;
+  
+  // gl_FragColor.x = 0.0;
+  // gl_FragColor.y = 0.0;
+  // gl_FragColor.z = 1.0;
   gl_FragColor.a = 1.0;
 }

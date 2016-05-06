@@ -29,7 +29,7 @@ void main(void) {
   // dr.y = 0.0;
   // dr.r = delta;
   // dr.g = 0.0;
-  dr.b = 0.0;
+  dr.z = 0.0;
   dr.a = 1.0;
   gl_FragColor = dr;
 }

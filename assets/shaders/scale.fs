@@ -12,5 +12,4 @@ void main(void) {
 
   // scale
   gl_FragColor = scale * texture2D(image, vTexCoord);
-  
 }
