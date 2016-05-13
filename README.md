@@ -1,7 +1,6 @@
 # registerGL
 
-2d non-rigid image registration using WebGL.
-
+2d non-rigid image registration using WebGL.  A longer term goal is to interact with the displacement field.
 ## Algorithm
 
 Build using Thirion's Demon's registration.
