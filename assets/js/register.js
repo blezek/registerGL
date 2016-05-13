@@ -99,7 +99,7 @@ function init() {
     register.fixedTexture = texture;
     register.textures["fixed"] = texture;
     // return load_image(gl,"images/copd1_iBHCT_slice.png");
-    return load_image(gl,"images/big_square.png");
+    return load_image(gl,"images/big_circle.png");
   }).then(function(texture) {
     register.movingTexture = texture;
     register.textures["moving"] = texture;
