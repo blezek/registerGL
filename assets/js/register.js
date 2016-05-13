@@ -9,6 +9,9 @@ var register = {
   fixedTexture: null,
   movingTexture: null,
 
+  // Currently displayed image values
+  pixels: null,
+  
   // buffer is the gemotery array for the triangles
   buffer: null,
 
@@ -82,17 +85,21 @@ function init() {
   // Textures needed
   register.textures["A"] = create_float_texture ( register, 512, 512 );
   register.textures["B"] = create_float_texture ( register, 512, 512 );
+  register.textures["encode"] = create_float_texture ( register, 512, 512 );
   register.textures["r"] = create_float_texture ( register, 512, 512 );
   register.textures["dr"] = create_float_texture ( register, 512, 512 );
+  register.textures["difference"] = create_float_texture ( register, 512, 512 );
   register.textures["movingGradient"] = create_float_texture ( register, 512, 512 );
   register.textures["displaced"] = create_float_texture ( register, 512, 512 );
   register.textures["fixedGradient"] = create_float_texture ( register, 512, 512 );
 
   // Load the image via a promise
-  load_image(gl, "images/copd1_eBHCT_slice.png").then(function(texture){
+  // load_image(gl, "images/copd1_eBHCT_slice.png").then(function(texture){
+  load_image(gl, "images/small_square.png").then(function(texture){
     register.fixedTexture = texture;
     register.textures["fixed"] = texture;
-    return load_image(gl,"images/copd1_iBHCT_slice.png");
+    // return load_image(gl,"images/copd1_iBHCT_slice.png");
+    return load_image(gl,"images/big_square.png");
   }).then(function(texture) {
     register.movingTexture = texture;
     register.textures["moving"] = texture;
@@ -102,7 +109,7 @@ function init() {
     register.displayProgram = program;
     return compile_program(gl, "shaders/register.vs", "shaders/difference.fs" );
   }).then(function(program){
-    register.metricProgram = program;
+    register.programs["difference"] = program;
     return compile_program(gl, "shaders/register.vs", "shaders/scale.fs" );
   }).then(function(program){
     register.programs["scale"] = program;
@@ -131,6 +138,7 @@ function init() {
   }).then(function(program){
     register.programs["displace"] = program;
     // start_render(register);
+    display(register,$("#buffer").val());
   }).catch(function(errorMessage){
     console.log("Error: " + errorMessage)
     $("#status").html(errorMessage);
@@ -145,11 +153,27 @@ function init() {
     start_render(register,10);
   });
 
+  $("#test").click(function() {
+    testStep(register, 1);
+    display (register, $('#buffer').val());
+  });
+  
   $("#buffer").change(function() {
     console.log("Display " + $("#buffer").val());
     display(register,$("#buffer").val());
   });
 
+  var show_value = function(event) {
+    if ( register.pixels == null ) { return; }
+    var offset = event.offsetX + event.offsetY * 512;
+    var dp = 2;
+    var text = Number(register.pixels[offset].toFixed(dp)) + ", "
+        + Number(register.pixels[offset+512*512].toFixed(dp)) + ", "
+        + Number(register.pixels[offset+512*512*2].toFixed(dp));
+    $('#value').text(text);
+  }
+  $("#canvas").mousemove(show_value);
+  
   $("#restart").click(function() {
     // Zero the R buffer
     console.log("setting r buffer to 0.0")
@@ -169,14 +193,17 @@ function init() {
 function display(r,buffer) {
   console.log("Displaying buffer " + buffer);
   var gl = r.gl;
-  gl.clearColor(0.0, 1.0, 0.0, 1.0);
-  gl.clear(gl.COLOR_BUFFER_BIT);
   gl.viewport(0,0,512,512);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   render ( r, r.displayProgram, [
     {name: "image", value: r.textures[buffer]},
   ]);
+
+  // Pull the buffer to a local array
+  r.pixels = read_texture ( r, r.textures[buffer], 512, 512);
   
+  // Do a single step
+  // start_render(r);
 }
 
 function start_render(r,count) {

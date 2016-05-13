@@ -14,8 +14,10 @@ uniform float direction;
 
 #define PI 3.14159265359
 
+// calculate gradient along one line form -RADIUS to RADIUS
+#define RADIUS 20
+
 void main(void) {
-  // calculate gradient in a 5x5 window
   float scale, escale;
 
   scale = 1.0 / (sigma * sqrt ( 2.0 * PI ) );
@@ -27,8 +29,7 @@ void main(void) {
   }
 
   vec4 sum = vec4(0.0,0.0,0.0,0.0);
-  // for (int x = -2; x <= 2; x++) {
-  for (int x = -20; x <= 20; x++) {
+  for (int x = -RADIUS; x <= RADIUS; x++) {
     float fx = float(x);
     float x2 = fx * fx;
     vec4 color = texture2D(image, vTexCoord + fx * d );

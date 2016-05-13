@@ -1,4 +1,5 @@
 precision highp float;
+precision highp sampler2D;
 
 attribute vec2 position;
 attribute vec2 texPosition;

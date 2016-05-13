@@ -15,42 +15,59 @@
 function demonsStep(r,count) {
   count = count || 1;
   console.log("Running " + count + " steps in the Demon's algorithm");
+
+  // delta between pixels, i.e. 1 / image size
+  var delta = 1/512.;
+  
+  // Sigmas are in pixels
+  var imageSigma = 0.0;
+  var gradientSigma = 0.0;
+  var drSigma = 5.0;
+  var rSigma = 0.0;
+
+  // How fast to update
+  var scale = 0.2;
+  
+  var gl = r.gl;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
+  gl.viewport(0,0,512,512);
+  
   for ( var counter = 0; counter < count; counter++ ) {
-    var gl = r.gl;
     // Update moving image
-    gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["displaced"], 0);
     render ( r, r.programs["displace"], [
       {name: "movingImage", value: r.movingTexture},
       {name: "r", value: r.textures["r"]},
+      {name: "scale", value: scale},
     ]);
 
     // Smooth the displaced image
-    // smoothBuffer ( r, "displaced", 4.0 );
+    smoothBuffer ( r, "displaced", imageSigma, delta );
     
     // Calculate the gradients
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["A"], 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["B"], 0);
     render ( r, r.programs["copy"], [
       {name: "image", value: r.textures["fixed"]},
     ]);
-    // smoothBuffer ( r, "A", 4.0 );
+    
+    smoothBuffer ( r, "A", imageSigma, delta );
     gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["fixedGradient"], 0);
     render ( r, r.programs["gradient"], [
-      {name: "image", value: r.textures["A"]},
-      {name: "delta", value: 1/512},
+      {name: "image", value: r.textures["B"]},
+      {name: "delta", value: delta},
     ]);
     // Smooth the gradient
-    // smoothBuffer ( r, "fixedGradient", 4.0 );
+    smoothBuffer ( r, "fixedGradient", gradientSigma, delta );
     
     gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["movingGradient"], 0);
     render ( r, r.programs["gradient"], [
       {name: "image", value: r.textures['displaced']},
-      {name: "delta", value: 1/512},
+      {name: "delta", value: delta},
     ]);
     // Smooth the gradient
-    // smoothBuffer ( r, "movingGradient", 4.0 );
+    smoothBuffer ( r, "movingGradient", gradientSigma, delta );
 
     // 4. calculate `dr`, the delta in `r`
     gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
@@ -60,53 +77,56 @@ function demonsStep(r,count) {
       {name: "fixedImageGradient", value: r.textures["fixedGradient"]},
       {name: "movingImage", value: r.textures["displaced"]},
       {name: "movingImageGradient", value: r.textures["movingGradient"]},
+      {name: "spacing", value: 1.0},
     ]);
 
     // 5. smooth `dr`
-    // smoothBuffer ( r, "dr", 2.0 );
+    smoothBuffer ( r, "dr", drSigma, delta );
     
     // 6. update `r`
     // Calculate to "A", copy to "r"
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["r"], 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["A"], 0);
     render ( r, r.programs["updateR"], [
-      {name: "r", value: r.textures["A"]},
+      {name: "r", value: r.textures["r"]},
       {name: "dr", value: r.textures["dr"]},
     ]);
 
-    // Swap the buffers
-    var tmp = r.textures["A"];
-    r.textures["A"] = r.textures["r"];
-    r.textures["r"] = tmp;
-
-    
-    // gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["r"], 0);
-    // render ( r, r.programs["copy"], [
-    //   {name: "image", value: r.textures["A"]},
-    // ]);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["r"], 0);
+    render ( r, r.programs["copy"], [
+      {name: "image", value: r.textures["A"]},
+    ]);
     
     // 7. smooth `r`
-    var sigma = 1.0;
-    // smoothBuffer ( r, "r", 8.0 );
+    smoothBuffer ( r, "r", rSigma, delta );
+    
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["difference"], 0);
+    render ( r, r.programs["difference"], [
+      {name: "movingImage", value: r.textures["displaced"]},
+      {name: "fixedImage", value: r.textures["fixed"]},
+    ]);
+
   }  
 }
 
-function smoothBuffer ( r, buffer, sigma ) {
+function smoothBuffer ( r, buffer, sigma, delta ) {
+  if ( sigma == 0.0 ) { return; }
   // First do horizontal pass from buffer into "B"
   // Second do vertical pass from "B" into buffer
   var gl = r.gl;
+  var tmpBuffer = "A";
   gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["B"], 0);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures[tmpBuffer], 0);
   render ( r, r.programs["smooth"], [
     {name: "image", value: r.textures[buffer]},
-    {name: "delta", value: 1/512},
+    {name: "delta", value: delta},
     {name: "sigma", value: sigma},
     {name: "direction", value: 0},
   ]);
   gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures[buffer], 0);
   render ( r, r.programs["smooth"], [
-    {name: "image", value: r.textures["B"]},
-    {name: "delta", value: 1/512},
+    {name: "image", value: r.textures[tmpBuffer]},
+    {name: "delta", value: delta},
     {name: "sigma", value: sigma},
     {name: "direction", value: 1},
   ]);

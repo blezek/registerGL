@@ -4,6 +4,7 @@
 // image -- image to sample
 
 precision highp float;
+precision highp sampler2D;
 
 // Passed texture coordinate from vertex shader
 varying vec2 vTexCoord;
@@ -11,7 +12,8 @@ varying vec2 vTexCoord;
 // Textures
 uniform sampler2D image;
 
-
+// which component to return
+uniform float index;
 
 float shift_right (float v, float amt) { 
     v = floor(v) + 0.5; 
@@ -47,6 +49,15 @@ vec4 encode_float (float val) {
 
 
 void main(void) {
-  float v = float(texture2D ( image, vTexCoord ).x);
+  
+  float v;
+  vec4 value = texture2D ( image, vTexCoord );
+  v = value.x;
+  if ( index == 1.0 ) {
+    v = value.y;
+  }
+  if ( index == 2.0 ) {
+    v = value.z;
+  }
   gl_FragColor = encode_float ( v );
 }

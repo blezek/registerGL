@@ -21,6 +21,7 @@
 
 
 precision highp float;
+precision highp sampler2D;
 
 // Passed texture coordinate from vertex shader
 varying vec2 vTexCoord;

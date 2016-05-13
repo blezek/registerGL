@@ -28,7 +28,7 @@ function render ( r, program, parameters ) {
   checkGLError(gl);
   // window.requestAnimationFrame(render,canvas);
 
-  var tex = gl.getAttribLocation(r.metricProgram, 'texPosition');
+  var tex = gl.getAttribLocation(program, 'texPosition');
   checkGLError(gl);
   gl.bindBuffer(gl.ARRAY_BUFFER, r.textureCoordBuffer);
   checkGLError(gl);

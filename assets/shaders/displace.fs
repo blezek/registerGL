@@ -8,9 +8,10 @@ varying vec2 vTexCoord;
 uniform sampler2D r;
 uniform sampler2D movingImage;
 
+uniform float scale;
+
 void main(void) {
 
-  vec4 rVal = texture2D(r, vTexCoord);
-  vec4 moving = texture2D(movingImage, vTexCoord + rVal.xy);
-  gl_FragColor = moving;
+  vec4 delta = texture2D(r, vTexCoord);
+  gl_FragColor = texture2D(movingImage, vTexCoord - delta.xy);
 }
