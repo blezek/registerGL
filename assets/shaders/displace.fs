@@ -5,12 +5,13 @@ precision highp sampler2D;
 varying vec2 vTexCoord;
 
 // Textures
-uniform sampler2D image;
+uniform sampler2D r;
+uniform sampler2D movingImage;
 
 uniform float scale;
 
 void main(void) {
 
-  // scale
-  gl_FragColor = scale * texture2D(image, vTexCoord);
+  vec4 delta = texture2D(r, vTexCoord);
+  gl_FragColor = texture2D(movingImage, vTexCoord - delta.xy);
 }

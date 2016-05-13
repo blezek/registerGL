@@ -1,6 +1,7 @@
 var gulp        = require('gulp');
 var browserSync = require('browser-sync').create();
 var concat      = require('gulp-concat');
+var sourcemaps  = require('gulp-sourcemaps');
 var argv        = require('yargs').argv;
 var exec        = require('child_process').exec;
 var log         = require('gulp-util').log;
@@ -10,10 +11,14 @@ var dist = "./dist/"
 // Build, returning a stream
 gulp.task('js', function() {
   gulp.src('assets/vendor/*.js')
+    .pipe(sourcemaps.init())
     .pipe(concat('vendor.js'))
+    .pipe(sourcemaps.write())
     .pipe(gulp.dest( dist+ "/js"));
   return gulp.src('assets/js/*.js')
+    .pipe(sourcemaps.init())
     .pipe(concat('register.js'))
+    .pipe(sourcemaps.write())
     .pipe(gulp.dest( dist+ "/js"));
 });
 
