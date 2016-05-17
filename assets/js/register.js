@@ -153,13 +153,15 @@ function init() {
     start_render(register,10);
   });
 
-  $("#test").click(function() {
-    testStep(register, 1);
-    display (register, $('#buffer').val());
+  $("#step100").click(function() {
+    start_render(register,100);
   });
-  
+
   $("#buffer").change(function() {
-    console.log("Display " + $("#buffer").val());
+    display(register,$("#buffer").val());
+  });
+
+  $("#scale").change(function() {
     display(register,$("#buffer").val());
   });
 
@@ -191,12 +193,14 @@ function init() {
 }
 
 function display(r,buffer) {
-  console.log("Displaying buffer " + buffer);
+  var scale = Number($("#scale").attr("value"));
+  console.log("Displaying buffer " + buffer + " scale: " + scale);
   var gl = r.gl;
   gl.viewport(0,0,512,512);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   render ( r, r.displayProgram, [
     {name: "image", value: r.textures[buffer]},
+    {name: "scale", value: scale},
   ]);
 
   // Pull the buffer to a local array
