@@ -16,8 +16,10 @@ uniform float spacing;
 
 void main(void) {
 
+  // normalization factor alpha
+  float alpha = 0.4;
+
   float Im, If;
-  float alpha = 2.5;
   vec4 dIm, dIf;
 
   Im = texture2D(movingImage, vTexCoord).x;
@@ -30,7 +32,7 @@ void main(void) {
   // Implement equation (4) from "Implementation and evaluation of various demons deformable image registration algorithms on GPU" by Gu, et. al.
   float intensityDelta = (Im - If);
 
-  if ( abs(intensityDelta) < 0.1 ) {
+  if ( abs(intensityDelta) < 0.2 ) {
     intensityDelta = 0.0;
   }
   
@@ -41,10 +43,10 @@ void main(void) {
   float length_of_dIm = length(dIm);
 
   // Passive force (1)
-  vec4 passiveForce = intensityDelta * dIf / ( intensityDelta2 / spacing2 + length_of_dIf * length_of_dIf );
+  vec4 passiveForce = intensityDelta * dIf / ( alpha * intensityDelta2 / spacing2 + length_of_dIf * length_of_dIf );
 
   // Active force (3)
-  vec4 activeForce = intensityDelta * dIm / ( intensityDelta2 / spacing2 + length_of_dIm * length_of_dIm );
+  vec4 activeForce = intensityDelta * dIm / ( alpha * intensityDelta2 / spacing2 + length_of_dIm * length_of_dIm );
 
   vec4 dr = activeForce + passiveForce;
   dr = activeForce + passiveForce;

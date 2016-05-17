@@ -94,12 +94,12 @@ function init() {
   register.textures["fixedGradient"] = create_float_texture ( register, 512, 512 );
 
   // Load the image via a promise
-  // load_image(gl, "images/copd1_eBHCT_slice.png").then(function(texture){
-  load_image(gl, "images/small_square.png").then(function(texture){
+  load_image(gl, "images/copd1_eBHCT_slice.png").then(function(texture){
+  // load_image(gl, "images/preOpT2.png").then(function(texture){
     register.fixedTexture = texture;
     register.textures["fixed"] = texture;
-    // return load_image(gl,"images/copd1_iBHCT_slice.png");
-    return load_image(gl,"images/big_circle.png");
+    return load_image(gl,"images/copd1_iBHCT_slice.png");
+    // return load_image(gl,"images/intraOpT2.png");
   }).then(function(texture) {
     register.movingTexture = texture;
     register.textures["moving"] = texture;
@@ -165,9 +165,9 @@ function init() {
 
   var show_value = function(event) {
     if ( register.pixels == null ) { return; }
-    var offset = event.offsetX + event.offsetY * 512;
+    var offset = event.offsetX + (511 - event.offsetY) * 512;
     var dp = 2;
-    var text = Number(register.pixels[offset].toFixed(dp)) + ", "
+    var text = 'Pixel @ ' + event.offsetX + ", " + event.offsetY + ": " + Number(register.pixels[offset].toFixed(dp)) + ", "
         + Number(register.pixels[offset+512*512].toFixed(dp)) + ", "
         + Number(register.pixels[offset+512*512*2].toFixed(dp));
     $('#value').text(text);
