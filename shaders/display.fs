@@ -6,9 +6,11 @@ varying vec2 vTexCoord;
 
 uniform sampler2D image;
 
+uniform float scale;
+
 void main(void) {
   // Simply display the image
   // Red is positve, blue is negative
   
-  gl_FragColor = abs(texture2D(image, vTexCoord));
+  gl_FragColor = scale * abs(texture2D(image, vTexCoord));
 }

@@ -39,6 +39,5 @@ void main(void) {
 
   // leave b and alpha alone
   vec4 s = texture2D(image, vTexCoord);
-  sum.ba = s.ba;
   gl_FragColor = sum;
 }
