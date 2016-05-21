@@ -17,13 +17,13 @@ function demonsStep(r,count) {
   console.log("Running " + count + " steps in the Demon's algorithm");
 
   // delta between pixels, i.e. 1 / image size
-  var delta = 1/512.;
+  var delta = 1./512.;
   
   // Sigmas are in pixels
   var imageSigma = 0.0;
   var gradientSigma = 0.0;
-  var drSigma = 5.0;
-  var rSigma = 0.0;
+  var drSigma = 10.0;
+  var rSigma = 1.0;
 
   // How fast to update
   var scale = 0.2;
@@ -105,6 +105,9 @@ function demonsStep(r,count) {
       {name: "fixedImage", value: r.textures["fixed"]},
     ]);
 
+
+    smoothBuffer(r,"B", 10, delta);
+    
   }  
 }
 

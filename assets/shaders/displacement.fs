@@ -17,7 +17,7 @@ uniform float spacing;
 void main(void) {
 
   // normalization factor alpha
-  float alpha = 0.4;
+  float alpha = 0.04;
 
   float Im, If;
   vec4 dIm, dIf;
@@ -43,14 +43,15 @@ void main(void) {
   float length_of_dIm = length(dIm);
 
   // Passive force (1)
-  vec4 passiveForce = intensityDelta * dIf / ( alpha * intensityDelta2 / spacing2 + length_of_dIf * length_of_dIf );
+  vec4 passiveForce = intensityDelta * dIf / ( alpha * intensityDelta2 + length_of_dIf * length_of_dIf );
 
   // Active force (3)
-  vec4 activeForce = intensityDelta * dIm / ( alpha * intensityDelta2 / spacing2 + length_of_dIm * length_of_dIm );
+  vec4 activeForce = intensityDelta * dIm / ( alpha * intensityDelta2 + length_of_dIm * length_of_dIm );
 
   vec4 dr = activeForce + passiveForce;
   dr = activeForce + passiveForce;
-  
+
+  dr = 0.1 * dr;
   dr.a = 1.0;
   gl_FragColor = dr;
 
