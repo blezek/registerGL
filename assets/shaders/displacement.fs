@@ -32,7 +32,7 @@ void main(void) {
   // Implement equation (4) from "Implementation and evaluation of various demons deformable image registration algorithms on GPU" by Gu, et. al.
   float intensityDelta = (Im - If);
 
-  if ( abs(intensityDelta) < 0.2 ) {
+  if ( abs(intensityDelta) < 0.1 ) {
     intensityDelta = 0.0;
   }
   
@@ -51,7 +51,7 @@ void main(void) {
   vec4 dr = activeForce + passiveForce;
   dr = activeForce + passiveForce;
 
-  dr = 0.1 * dr;
+  dr = 1.0 / 512. * dr;
   dr.a = 1.0;
   gl_FragColor = dr;
 
