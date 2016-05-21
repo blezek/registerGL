@@ -94,12 +94,13 @@ function init() {
   register.textures["fixedGradient"] = create_float_texture ( register, 512, 512 );
 
   // Load the image via a promise
-  // load_image(gl, "images/copd1_eBHCT_slice.png").then(function(texture){
-  load_image(gl, "images/small_square.png").then(function(texture){
+  load_image(gl, "images/copd1_eBHCT_slice.png").then(function(texture){
+  // load_image(gl, "images/preOpT2.png").then(function(texture){
     register.fixedTexture = texture;
     register.textures["fixed"] = texture;
-    // return load_image(gl,"images/copd1_iBHCT_slice.png");
-    return load_image(gl,"images/big_circle.png");
+    return load_image(gl,"images/copd1_iBHCT_slice.png");
+    // return load_image(gl,"images/intraOpT2.png");
+    // return load_image(gl,"images/preOpT2-slight.png");
   }).then(function(texture) {
     register.movingTexture = texture;
     register.textures["moving"] = texture;
@@ -137,66 +138,23 @@ function init() {
     return compile_program(gl, "shaders/register.vs", "shaders/displace.fs" );
   }).then(function(program){
     register.programs["displace"] = program;
-    // start_render(register);
-    display(register,$("#buffer").val());
+    start_render(register);
+    // display(register,$("#buffer").val());
   }).catch(function(errorMessage){
     console.log("Error: " + errorMessage)
     $("#status").html(errorMessage);
   });
-
-
-  $("#step").click(function() {
-    start_render(register);
-  });
-  
-  $("#step10").click(function() {
-    start_render(register,10);
-  });
-
-  $("#test").click(function() {
-    testStep(register, 1);
-    display (register, $('#buffer').val());
-  });
-  
-  $("#buffer").change(function() {
-    console.log("Display " + $("#buffer").val());
-    display(register,$("#buffer").val());
-  });
-
-  var show_value = function(event) {
-    if ( register.pixels == null ) { return; }
-    var offset = event.offsetX + event.offsetY * 512;
-    var dp = 2;
-    var text = Number(register.pixels[offset].toFixed(dp)) + ", "
-        + Number(register.pixels[offset+512*512].toFixed(dp)) + ", "
-        + Number(register.pixels[offset+512*512*2].toFixed(dp));
-    $('#value').text(text);
-  }
-  $("#canvas").mousemove(show_value);
-  
-  $("#restart").click(function() {
-    // Zero the R buffer
-    console.log("setting r buffer to 0.0")
-    var r = register;
-    var gl = r.gl;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, r.framebuffer);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.textures["r"], 0);
-    render ( r, r.programs["scale"], [
-      {name: "image", value: r.textures["A"]},
-      {name: "scale", value: 0.0},
-    ]);
-    display(register,$("#buffer").val());
-  });
-  
 }
 
 function display(r,buffer) {
-  console.log("Displaying buffer " + buffer);
+  var scale = Number($("#scale").attr("value"));
+  console.log("Displaying buffer " + buffer + " scale: " + scale);
   var gl = r.gl;
   gl.viewport(0,0,512,512);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   render ( r, r.displayProgram, [
     {name: "image", value: r.textures[buffer]},
+    {name: "scale", value: scale},
   ]);
 
   // Pull the buffer to a local array
